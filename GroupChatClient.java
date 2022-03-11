@@ -3,12 +3,14 @@ import java.io.*;
 
 public class GroupChatClient implements Runnable {
     private BufferedReader fromUser;
+    private BufferedReader fromServer;
     private PrintWriter toSocket;
     public static String name;
 
-    public GroupChatClient(BufferedReader reader, PrintWriter writer) {
+    public GroupChatClient(BufferedReader reader, PrintWriter writer, BufferedReader servRead) {
         fromUser =  reader;
         toSocket = writer;
+        fromServer = servRead;
     }
 
     public void run() {
@@ -20,6 +22,13 @@ public class GroupChatClient implements Runnable {
 					break;
                 }
                 toSocket.println(name + ": " + line);
+
+                String msg = fromServer.readLine();
+                if (msg == null) {
+                    System.out.println("Server Dropped Connection");
+                    break;
+                }
+                System.out.println(msg);
             }
         } catch (Exception e) {
             System.out.println(e);
@@ -36,7 +45,7 @@ public class GroupChatClient implements Runnable {
         Socket socket = null;
         try {
             socket = new Socket(args[0], Integer.parseInt(args[1]));
-            System.out.println("Connected to server at " + args[0] + ":" + args[1]);
+            System.out.println("Connected to server at " + args[0] + ": " + args[1]);
         } catch (Exception e) {
             System.out.println(e);
             System.exit(1);
@@ -45,10 +54,12 @@ public class GroupChatClient implements Runnable {
         try {
             PrintWriter toSocket = new PrintWriter(socket.getOutputStream(), true);
 
+            BufferedReader fromServer = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
             BufferedReader fromUser = new BufferedReader(new InputStreamReader(System.in));
 
             while (true) {
-                Thread child = new Thread(new GroupChatClient(fromUser, toSocket));
+                Thread child = new Thread(new GroupChatClient(fromUser, toSocket, fromServer));
                 child.run();
             }
         } catch (Exception e) {

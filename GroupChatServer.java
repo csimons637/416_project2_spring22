@@ -46,10 +46,9 @@ public class GroupChatServer implements Runnable
      */
     public static synchronized void relayMessage(PrintWriter fromClient, String msg)
 	{
-        for (int i = 0; i < clientList.size(); i++) {
-            if (clientList.get(i) != fromClient) {
-                clientList.get(i).println(msg);
-            }
+        System.out.println(msg);
+        for (PrintWriter c : clientList) {
+            c.println(msg);
         }
 	}
 
@@ -63,16 +62,16 @@ public class GroupChatServer implements Runnable
             BufferedReader fromClient = new BufferedReader(new InputStreamReader(clientSock.getInputStream()));
             PrintWriter toClient = new PrintWriter(clientSock.getOutputStream(), true);
 
-            addClient(toClient);
-
 			while (true) {
-                String msg = fromClient.readLine();
+                addClient(toClient);
+
+                String msg = null;
+                msg = fromClient.readLine();
                 if (msg == null) { // If null, client quit or EOF
                     System.out.println("***Client Quit | Closing Connection***");
                     break;
                 }
                 relayMessage(toClient, msg);
-                System.out.println(msg);
 			}
 
             removeClient(toClient);
